@@ -1,0 +1,345 @@
+{% extends 'myapp/base.html' %}
+{% load static %}
+
+{% block title %}Home{% endblock title %}
+
+{% block content %}
+<div class="container">
+    <div class="d-flex justify-content-end mt-4">
+        <button type="button" class="btn btn-primary fa fa-plus" data-toggle="modal" data-target="#addTodoModal" data-whatever="@mdo"></button>
+        <div class="modal fade" id="addTodoModal" tabindex="-1" role="dialog" aria-labelledby="todoModalLabel" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="todoModalLabel">New Todo</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <form action="" method="post">
+                        {% csrf_token %}
+                        <div class="modal-body">
+                            <p>
+                                <input type="hidden" name="todoid" id="todoid">
+                            </p>
+                            {{form.as_p}}
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                            <input type="button" class="btn btn-primary"  name="save-btn" value="Save" id="btnsave">
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+    </div>
+    {% if todos %}
+        <div class="row" id="todo-list">
+            {% for todo in todos %}
+                <div class="card" style="width: 16rem; margin: 10px 10px;">
+                    <div class="card-body">
+                        <h5 class="card-title">{{todo.title}}</h5>
+                        <h6 class="card-subtitle mb-2 text-muted">{{todo.user}}</h6>
+                        <p class="card-text">{{todo.details}}</p>
+                        <div class="d-flex justify-content-between">
+                            <button type="button" class="btn btn-info btn-edit" data-toggle="modal" data-target="#todoEditModal" data-sid="{{todo.id}}">Edit</button>
+                            <div class="modal fade" id="todoEditModal" tabindex="-1" role="dialog" aria-labelledby="todoEditModalLabel" aria-hidden="true">
+                                <div class="modal-dialog" role="document">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title" id="todoEditModalLabel">New message</h5>
+                                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                                <span aria-hidden="true">&times;</span>
+                                            </button>
+                                        </div>
+                                        <form action="" method="post">
+                                            {% csrf_token %}
+                                            <div class="modal-body">
+                                                <p>
+                                                    <input type="hidden" name="todoid" id="todoid">
+                                                </p>
+                                                <p>
+                                                    <label for="id_title">Title:</label>
+                                                    <input type="text" name="title" class="form-control data-field" maxlength="50" required="" id="id_edit_title">
+                                                </p>
+
+                                                <p>
+                                                    <label for="id_details">Details:</label>
+                                                    <textarea name="details" cols="20" rows="10" class="form-control data-field" row="5" style="height: 90px;" maxlength="500" required="" id="id_edit_details"></textarea>
+                                                </p>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                                                <input type="button" class="btn btn-primary save-btn"  name="edit-btn" value="Edit" id="edit-save">
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                            <form method="post">
+                                {% csrf_token %}
+                                <button class="btn btn-danger" type="button" id="btn-delete" data-sid="{{todo.id}}"><i class="fa fa-trash" aria-hidden="true"></i></button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="container">
+            <h3 class="text-center">No Todo</h3>
+        </div>
+    {% endif %}
+
+    </div>
+</div>
+
+
+
+<script src="{% static 'myapp/js/jquery.js' %}"></script>
+
+<script>
+    $(document).ready(function() {
+        $.ajax({
+            url: "{% url 'home' %}",
+            method: "GET"
+        })
+    });
+
+
+    $("#btnsave").click(function() {
+        console.log("Save Button Clicked");
+        output = "";
+
+        let tid = $("#todoid").val();
+        let title = $("#id_title").val();
+        let details = $("#id_details").val();
+        // let csrf = $("input[name=csrfmiddlewaretoken]").val();
+
+        if (title == "") {
+            console.log('Enter title.')
+
+        } else if (details == "") {
+            console.log('Enter details.')
+        } else {
+            console.log(title)
+            console.log(details)
+
+            // mydata = {title: title, details: details, csrfmiddlewaretoken: csrf};
+            mydata = {todoid: tid, title:title, details:details};
+
+            $.ajax({
+                url: "{% url 'save' %}",
+                method: "POST",
+                data: mydata,
+                success: function(data) {
+                    x = data.todo_data
+                    if (data.status == 'Save') {
+                        console.log('data save successfully.');
+
+                        for (i=0; i<x.length; i++){
+                            output += `
+                                <div class="card" style="width: 16rem; margin: 10px 10px;">
+                                    <div class="card-body">
+                                        <h5 class="card-title">${x[i].title}</h5>
+                                        <h6 class="card-subtitle mb-2 text-muted">${x[i].user}</h6>
+                                        <p class="card-text">${x[i].details}</p>
+                                        <div class="d-flex justify-content-between">
+                                            <a href="" class="btn btn-info" data-toggle="" data-target="#todoEditModal">Edit</a>
+                                            <div class="modal fade" id="todoEditModal" tabindex="-1" role="dialog" aria-labelledby="todoEditModalLabel" aria-hidden="true">
+                                                <div class="modal-dialog" role="document">
+                                                    <div class="modal-content">
+                                                        <div class="modal-header">
+                                                            <h5 class="modal-title" id="todoEditModalLabel">New message</h5>
+                                                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                                                <span aria-hidden="true">&times;</span>
+                                                            </button>
+                                                        </div>
+                                                        <form action="" method="post">
+                                                            {% csrf_token %}
+                                                            <div class="modal-body">
+                                                                {{form.as_p}}
+                                                            </div>
+                                                            <div class="modal-footer">
+                                                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                                                                <input type="submit" class="btn btn-primary"  name="edit-btn" value="Edit">
+                                                            </div>
+                                                        </form>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <form method="post">
+                                                {% csrf_token %}
+                                                <button class="btn btn-danger" type="button" id="btn-delete" data-sid="${x[i].id}"><i class="fa fa-trash" aria-hidden="true"></i></button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            `
+                        }
+
+                        $("#todo-list").html(output);
+                        $("form")[0].reset();
+                        location.reload(true);
+
+                    } else if (data.status == 0) {
+                        console.log('Unable to save form')
+                    }
+                },
+            });
+        }
+    });
+
+
+    // Delete Todo
+    $(".card").on("click", "#btn-delete", function() {
+        console.log("Delete Button Clicked");
+
+        let id = $(this).attr("data-sid");
+        console.log(id);
+        mydata = {sid: id};
+        
+        mythis = this;
+
+        $.ajax({
+            url: "{% url 'delete' %}",
+            method: "POST",
+            data: mydata,
+            success: function(data){
+                console.log(data);
+
+                if (data.status == 1) {
+                    console.log('Data Delete successfully.')
+                    $(mythis).closest(".card").fadeOut()
+                }
+            }
+        });
+    });
+
+
+    // Edit Todo
+    // $(".card").on("click", "#btn-edit", function() {
+    //     console.log("Edit Button Clicked");
+
+    //     let id = $(this).attr("data-sid");
+    //     console.log(id);
+    //     mydata = {sid: id};
+
+    //     $.ajax({
+    //         url: "{% url 'edit' %}",
+    //         method: "GET",
+    //         data: mydata,
+    //         dataType: "json",
+    //         success: function(data){
+    //             console.log(data);
+
+    //             $("#todoid").val(data.id);
+    //             $("#id_edit_title").val(data.title);
+    //             $("#id_edit_details").val(data.details);
+                
+    //             $("#edit-save").click(function() {
+    //                 console.log("Save Button Clicked");
+
+                    
+    //                 let title = $("#id_edit_title").val();
+    //                 let details = $("#id_edit_details").val();
+
+    //                 mydata = {title: title, details: details};
+    //                 console.log(mydata)
+
+    //             });
+    //         }
+    //     });
+
+
+    //     $.ajax({
+    //         url: "{% url 'edit' %}",
+    //         method: "GET",
+    //         data: mydata,
+    //         dataType: "json",
+    //         success: function(data){
+    //             console.log('save')
+    //         }
+
+    //     })
+
+
+
+    //     // $.ajax({
+    //     //     url: "{% url 'edit' %}",
+    //     //     method: "POST",
+    //     //     data: mydata,
+    //     //     dataType: "json",
+    //     //     success: function(data){
+    //     //         console.log(data);
+
+    //     //         $("#todoid").val(data.id);
+    //     //         $("#id_edit_title").val(data.title);
+    //     //         $("#id_edit_details").val(data.details);
+                
+    //     //         $("#edit-save").click(function() {
+    //     //             console.log("Save Button Clicked");
+                    
+    //     //             let title = $("#id_edit_title").val();
+    //     //             let details = $("#id_edit_details").val();
+
+    //     //             mydata = {title: title, details: details};
+    //     //             console.log(mydata)
+    //     //         });
+    //     //     }
+    //     // });
+
+        
+
+    // });
+
+
+    $(".btn-edit").click(function(){
+        console.log('Edit button clicked.')
+
+        let id = $(this).attr("data-sid");
+        console.log(id);
+        mydata = {sid: id};
+
+        $.ajax({
+            url: "{% url 'edit' %}",
+            method: "GET",
+            data: mydata,
+            dataType: "json",
+            success: function(data){
+                console.log(data);
+
+                $("#todoid").val(data.id);
+                $("#id_edit_title").val(data.title);
+                $("#id_edit_details").val(data.details);
+                
+            }
+        });
+
+    })
+
+
+    $("#edit-save").click(function() {
+        console.log('Edit Save button clicked.')
+
+        let title = $("#id_edit_title").val();
+        let details = $("#id_edit_details").val();
+
+        mydata = {title:title, details:details}
+
+        $.ajax({
+            url: "{% url 'edit' %}",
+            method: "POST",
+            data: mydata,
+            dataType: "json",
+            success: function(data) {
+                console.log('done')
+            }
+        })
+    })
+
+
+</script>
+
+{% endblock content %}

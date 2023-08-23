@@ -1,0 +1,27 @@
+{% extends 'myapp/base.html' %}
+{% block title %}Edit{% endblock title %}
+
+{% block content %}
+<div class="modal-dialog" role="document">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h5 class="modal-title" id="todoEditModalLabel">Edit Todo</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+        <form action="" method="post">
+            {% csrf_token %}
+            <div class="modal-body">
+                {{form.as_p}}
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <input type="submit" class="btn btn-primary"  name="edit-btn" value="Edit">
+            </div>
+        </form>
+    </div>
+</div>
+
+
+{% endblock content %}
